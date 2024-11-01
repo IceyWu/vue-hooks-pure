@@ -1,4 +1,4 @@
-# v3-hooks
+# vue-hooks-pure
 
 <p align='center'>
   <img src='/public/logo.png' width="240" />
@@ -11,15 +11,14 @@
 ## 📦 Install
 
 ```bash
-pnpm i v3-hooks
+pnpm i vue-hooks-pure
 
 or
 
-yarn add v3-hooks
+yarn add vue-hooks-pure
 ```
 
 ## 🦄 Usage
+
 ```typescript
-
-```
-
+``

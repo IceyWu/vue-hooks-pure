@@ -2,7 +2,7 @@
   "name": "demo",
   "version": "1.0.0",
   "packageManager": "pnpm@9.5.0",
-  "description": "v3-hooks demo",
+  "description": "vue-hooks-pure demo",
   "author": "Icey Wu <3128006406@qq.com>",
   "license": "MIT",
   "main": "index.js",
