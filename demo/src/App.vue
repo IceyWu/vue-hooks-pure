@@ -7,9 +7,11 @@ import TestCom from './compoenets/test.vue'
 
 const { a } = useRequest()
 console.log('🐠-----a-----', a)
-function testModel() {
+async function testModel() {
   console.log('💗testModel---------->')
-  usePopup({}, TestCom)
+  // usePopup({}, TestCom)
+  const tt = await usePopup(TestCom, {})
+  console.log('🌳-----tt-----', tt)
 }
 </script>
 

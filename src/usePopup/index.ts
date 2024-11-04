@@ -1,8 +1,22 @@
-/**
- * 用户访问相关的弹窗
- */
+import type { Component } from 'vue'
 import { h } from 'vue'
 import { domAdd } from './domAdd'
+
+interface Renderer {
+  header?: () => any
+  default?: () => any
+  footer?: () => any
+}
+
+interface PopupOptions {
+  renderer?: Renderer
+  [key: string]: any
+}
+interface PopupInstance {
+  add: () => void
+  destroy: () => void
+  close: () => void
+}
 
 function domSet(el: HTMLDivElement) {
   el.setAttribute(
@@ -11,11 +25,11 @@ function domSet(el: HTMLDivElement) {
   )
 }
 
-function usePopup(options: any, com: any) {
+function usePopup(com: Component, options: PopupOptions = {}) {
   const { renderer, ...data } = options
-  return new Promise(() => {
-    let popupInstance: any
-    const addDom = h(com as any, {
+  return new Promise((resolve) => {
+    let popupInstance: PopupInstance | null = null
+    const addDom = h(com, {
       data,
     })
     const handleClose = () => {
@@ -38,6 +52,7 @@ function usePopup(options: any, com: any) {
       { domSet },
     )
     popupInstance.add()
+    resolve(popupInstance)
   })
 }
 
