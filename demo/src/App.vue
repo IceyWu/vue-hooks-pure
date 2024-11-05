@@ -1,22 +1,49 @@
 <script lang="ts" setup>
+import axios from 'axios'
+
 import { NButton, NFlex } from 'naive-ui'
-
-import { usePopup, useRequest } from '../../src/index'
+import { computed, onMounted } from 'vue'
+import { useRequest } from '../../src/index'
 // import { usePopup, useRequest } from '../../dist/esm'
-import TestCom from './compoenets/test.vue'
 
-const { a } = useRequest()
-console.log('🐠-----a-----', a)
-async function testModel() {
-  console.log('💗testModel---------->')
-  // usePopup({}, TestCom)
-  const tt = await usePopup(TestCom, {})
-  console.log('🌳-----tt-----', tt)
+async function getData(params) {
+  console.log('🎉-----params-----', params)
+  return axios.get('https://api.github.com/users')
+  // return axios
 }
+
+const { onRefresh, onLoad, result } = useRequest(getData, {
+  target: 'list',
+  listOptions: {
+    getVal: res => res.data,
+    // defaultPageKey: 'page_a',
+    // defaultSizeKey: 'size_a',
+    // defaultDataKey: 'data_a',
+    // defaultTotalKey: 'total_a',
+    // defaultFinishedKey: 'finished_a',
+    // defaultLoadingKey: 'loading_a',
+    // defaultRefreshKey: 'refresh_a',
+
+  },
+
+})
+async function testModel() {
+  await onLoad()
+  console.log('🌳-----data-----', result.value)
+}
+onMounted(async () => {
+  await onRefresh()
+  console.log('🌳-----data-----', result.value)
+})
+const showVl = computed(() => {
+  const { data, ...tt } = result.value
+  return tt
+})
 </script>
 
 <template>
   <NFlex align="center" justify="space-around">
+    {{ showVl }}
     <NButton type="success" @click="testModel">
       Open Modal
     </NButton>
