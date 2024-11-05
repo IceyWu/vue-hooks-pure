@@ -12,10 +12,11 @@ async function getData(params) {
   // return axios
 }
 
-const { onRefresh, onLoad, result } = useRequest(getData, {
+const { onRefresh, onLoad, result, loading } = useRequest(getData, {
   target: 'list',
+  getVal: res => res.data,
   listOptions: {
-    getVal: res => res.data,
+
     // defaultPageKey: 'page_a',
     // defaultSizeKey: 'size_a',
     // defaultDataKey: 'data_a',
@@ -43,10 +44,15 @@ const showVl = computed(() => {
 
 <template>
   <NFlex align="center" justify="space-around">
-    {{ showVl }}
     <NButton type="success" @click="testModel">
       Open Modal
     </NButton>
+    <div v-if="loading">
+      <h1>loading.........</h1>
+    </div>
+    <div v-else>
+      {{ showVl }}
+    </div>
   </NFlex>
 </template>
 
