@@ -16,11 +16,11 @@ interface Request {
   (other?: any): Promise<any>
 }
 
-function getListLength(data: any) {
-  return data.length
-}
+// function getListLength(data: any) {
+//   return data?.length || 0
+// }
 function getListFinished(data: any, totalNums: number) {
-  return data.length >= totalNums
+  return data?.length >= totalNums
 }
 function getListVal(data: any) {
   return data
@@ -28,7 +28,8 @@ function getListVal(data: any) {
 
 interface ListOptions {
   getLength?: (data: any) => number
-  getFinished?: (data: any) => boolean
+  getTotal?: (data: any) => number
+  getFinished?: (data: any, total: any) => boolean
   default?: any
   defaultPageKey?: string
   defaultSizeKey?: string
@@ -44,47 +45,55 @@ interface Options {
   getVal?: (data: any) => any
 }
 
-function useRequest(request: Request, options: Options = { target: 'list' }): RequestResult {
+function useRequest(
+  request: Request,
+  options: Options = { target: 'list' },
+): RequestResult {
   /**
    * 查询条件
    */
   const search = ref({})
 
-  const result = ref<any>({
-
-  })
+  const result = ref<any>({})
   const loading = ref(false)
   const paramsObj = reactive<ParamsObj>({
     page: 0,
     size: 10,
   })
 
-  const setListRefVal = (target: 'data' | 'loading' | 'finished' | 'refreshing' | 'total', val: any, isGet?: boolean) => {
-    const { defaultDataKey, defaultLoadingKey, defaultFinishedKey, defaultTotalKey, defaultRefreshKey } = getObjVal(options, 'listOptions', {})
+  const setListRefVal = (
+    target: 'data' | 'loading' | 'finished' | 'refreshing' | 'total',
+    val: any,
+    isGet?: boolean,
+  ) => {
+    const {
+      defaultDataKey,
+      defaultLoadingKey,
+      defaultFinishedKey,
+      defaultTotalKey,
+      defaultRefreshKey,
+    } = getObjVal(options, 'listOptions', {})
     switch (target) {
       case 'data': {
         const dataKey = defaultDataKey || 'data'
 
         if (isGet)
           return result.value[dataKey]
-        else
-          result.value[dataKey] = val
+        else result.value[dataKey] = val
         break
       }
       case 'loading': {
         const loadingKey = defaultLoadingKey || 'loading'
         if (isGet)
           return result.value[loadingKey]
-        else
-          result.value[loadingKey] = val
+        else result.value[loadingKey] = val
         break
       }
       case 'finished': {
         const finishedKey = defaultFinishedKey || 'finished'
         if (isGet)
           return result.value[finishedKey]
-        else
-          result.value[finishedKey] = val
+        else result.value[finishedKey] = val
         break
       }
       case 'refreshing': {
@@ -92,8 +101,7 @@ function useRequest(request: Request, options: Options = { target: 'list' }): Re
 
         if (isGet)
           return result.value[refreshingKey]
-        else
-          result.value[refreshingKey] = val
+        else result.value[refreshingKey] = val
         break
       }
       case 'total': {
@@ -101,23 +109,27 @@ function useRequest(request: Request, options: Options = { target: 'list' }): Re
 
         if (isGet)
           return result.value[totalKey]
-        else
-          result.value[totalKey] = val
+        else result.value[totalKey] = val
         break
       }
     }
   }
-  const getListRefVal = (target: 'data' | 'loading' | 'finished' | 'refreshing' | 'total') => {
+  const getListRefVal = (
+    target: 'data' | 'loading' | 'finished' | 'refreshing' | 'total',
+  ) => {
     return setListRefVal(target, undefined, true)
   }
 
   const getParamsVal = (reloadSize?: number) => {
-    const params: any = {
-    }
+    const params: any = {}
     const requestTarget = getObjVal(options, 'target')
 
     if (requestTarget === 'list') {
-      const { defaultPageKey, defaultSizeKey } = getObjVal(options, 'listOptions', {})
+      const { defaultPageKey, defaultSizeKey } = getObjVal(
+        options,
+        'listOptions',
+        {},
+      )
       const page_key = defaultPageKey || baseDefaultPageKey.page
       const size_key = defaultSizeKey || baseDefaultPageKey.size
 
@@ -160,8 +172,13 @@ function useRequest(request: Request, options: Options = { target: 'list' }): Re
   async function onLoad(isReload = false) {
     const requestTarget = getObjVal(options, 'target')
     if (requestTarget === 'list') {
-      if (getListRefVal('loading') || getListRefVal('finished') || loading.value)
+      if (
+        getListRefVal('loading')
+        || getListRefVal('finished')
+        || loading.value
+      ) {
         return
+      }
       const totalNumTemp = getListRefVal('data').length || 0
       if (isReload && totalNumTemp > 0) {
         return await getData(totalNumTemp)
@@ -177,7 +194,7 @@ function useRequest(request: Request, options: Options = { target: 'list' }): Re
   }
   async function onRefresh(isReload = false) {
     if (!isReload) {
-    // 参数重置
+      // 参数重置
       initData()
     }
     else {
@@ -196,19 +213,26 @@ function useRequest(request: Request, options: Options = { target: 'list' }): Re
 
     const tempParams = getParamsVal(reloadSize)
 
+    if (!request) {
+      return
+    }
     const [err, resData = []] = await to(request(tempParams))
+
     const { getVal = getListVal } = options || {}
 
     const listData = getVal(resData)
 
     // 列表情况
     if (target === 'list') {
-      const { getLength = getListLength, getFinished = getListFinished } = getObjVal(options, 'listOptions', {})
+      const {
+        getFinished = getListFinished,
+        getTotal,
+      } = getObjVal(options, 'listOptions', {})
       if (getListRefVal('refreshing')) {
         setListRefVal('data', listOptions?.default || [])
         setListRefVal('refreshing', false)
       }
-      const totalNums = getLength(listData) || 0
+      const totalNums = getTotal(resData) || 0
       setListRefVal('total', totalNums)
       const tempList = listData || []
       if (reloadSize) {
