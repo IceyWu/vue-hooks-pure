@@ -1,7 +1,7 @@
 {
   "name": "vue-hooks-pure",
   "type": "module",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "packageManager": "pnpm@9.6.0",
   "description": "Hooks for Vue3",
   "author": "Icey Wu <3128006406@qq.com>",
