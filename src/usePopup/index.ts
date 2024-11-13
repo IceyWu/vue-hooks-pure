@@ -7,33 +7,61 @@ interface Renderer {
   default?: () => any
   footer?: () => any
 }
+interface DomSetOptions {
+  alignCenter?: boolean
+  modal?: boolean
+  modalColor?: string
+}
 
-interface PopupOptions {
+interface PopupOptions extends DomSetOptions {
   renderer?: Renderer
   [key: string]: any
 }
+
 interface PopupInstance {
   add: () => void
   destroy: () => void
   close: () => void
 }
 
-function domSet(el: HTMLDivElement) {
-  el.setAttribute(
-    'style',
-    'position: absolute; width: 100%; height: 100vh; top: 0; left: 0; z-index: 9999;',
-  )
+function domSet(el: HTMLDivElement, options?: DomSetOptions) {
+  const { alignCenter = true, modal = true, modalColor } = options || {}
+  if (alignCenter) {
+    el.style.display = 'flex'
+    el.style.justifyContent = 'center'
+    el.style.alignItems = 'center'
+  }
+  if (modal) {
+    el.style.position = 'absolute'
+    el.style.width = '100%'
+    el.style.height = '100vh'
+    el.style.top = '0'
+    el.style.left = '0'
+    el.style.zIndex = '9999'
+    el.style.backgroundColor = modalColor || 'rgba(0, 0, 0, 0.5)'
+  }
 }
 
 function usePopup(com: Component, options: PopupOptions = {}) {
-  const { renderer, ...data } = options
-  return new Promise((resolve) => {
+  const { renderer, alignCenter = true, modal = true, modalColor, ...data } = options
+  return new Promise((resolve, reject) => {
     let popupInstance: PopupInstance | null = null
     const addDom = h(com, {
       data,
     })
     const handleClose = () => {
       popupInstance?.destroy()
+    }
+    const handleCancel = () => {
+      popupInstance?.destroy()
+      // eslint-disable-next-line prefer-promise-reject-errors
+      reject('cancel')
+    }
+    const handleOk = () => {
+      resolve({
+        done: popupInstance?.destroy,
+        data,
+      })
     }
 
     popupInstance = domAdd(
@@ -42,6 +70,8 @@ function usePopup(com: Component, options: PopupOptions = {}) {
         {
           ...data,
           onClose: handleClose,
+          onCancel: handleCancel,
+          onOk: handleOk,
         },
         {
           header: renderer?.header,
@@ -49,7 +79,9 @@ function usePopup(com: Component, options: PopupOptions = {}) {
           footer: renderer?.footer,
         },
       ),
-      { domSet },
+      { domSet: (el: HTMLDivElement) => domSet(el, { alignCenter, modal, modalColor }),
+
+      },
     )
     popupInstance.add()
     resolve(popupInstance)

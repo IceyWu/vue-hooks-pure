@@ -7,6 +7,7 @@ import { baseDefaultPageKey } from './utils'
 interface RequestResult {
   loading: Ref<boolean>
   result: any
+  search: any
   getData: (reloadSize?: number) => Promise<void>
   onRefresh: (isReload?: boolean) => Promise<void>
   onLoad: (isReload?: boolean) => Promise<void>
@@ -38,11 +39,14 @@ interface ListOptions {
   defaultFinishedKey?: string
   defaultTotalKey?: string
   defaultRefreshKey?: string
+  defaultPage?: number
+  defaultSize?: number
 }
 interface Options {
   target?: string
   listOptions?: ListOptions
   getVal?: (data: any) => any
+  loadingDelay?: number
 }
 
 function useRequest(
@@ -84,9 +88,21 @@ function useRequest(
       }
       case 'loading': {
         const loadingKey = defaultLoadingKey || 'loading'
-        if (isGet)
+        if (isGet) {
           return result.value[loadingKey]
-        else result.value[loadingKey] = val
+        }
+        else {
+          if (val === false) {
+            const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
+
+            setTimeout(() => {
+              result.value[loadingKey] = val
+            }, defaultDelay)
+          }
+          else {
+            result.value[loadingKey] = val
+          }
+        }
         break
       }
       case 'finished': {
@@ -151,13 +167,14 @@ function useRequest(
   function initData() {
     const requestTarget = getObjVal(options, 'target')
     if (requestTarget === 'list') {
+      const { defaultPage, defaultSize } = getObjVal(options, 'listOptions', {})
       setListRefVal('loading', false)
       setListRefVal('refreshing', false)
       setListRefVal('refreshing', true)
       setListRefVal('finished', false)
       setListRefVal('data', [])
-      paramsObj.page = 0
-      paramsObj.size = 10
+      paramsObj.page = defaultPage || -1
+      paramsObj.size = defaultSize || 10
     }
     else {
       result.value = {}
@@ -224,10 +241,11 @@ function useRequest(
 
     // 列表情况
     if (target === 'list') {
-      const {
-        getFinished = getListFinished,
-        getTotal,
-      } = getObjVal(options, 'listOptions', {})
+      const { getFinished = getListFinished, getTotal } = getObjVal(
+        options,
+        'listOptions',
+        {},
+      )
       if (getListRefVal('refreshing')) {
         setListRefVal('data', listOptions?.default || [])
         setListRefVal('refreshing', false)
@@ -242,7 +260,8 @@ function useRequest(
         const newList = getListRefVal('data').concat(tempList || [])
         setListRefVal('data', newList)
       }
-      setListRefVal('finished', getFinished(listData, totalNums))
+      const totalList = setListRefVal('data', undefined, true)
+      setListRefVal('finished', getFinished(totalList, totalNums))
     }
     // 其他情况
     else {
@@ -263,6 +282,7 @@ function useRequest(
     getData,
     onRefresh,
     onLoad,
+    search,
   }
 }
 
