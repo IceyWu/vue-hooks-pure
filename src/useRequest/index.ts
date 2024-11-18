@@ -173,8 +173,8 @@ function useRequest(
       setListRefVal('refreshing', true)
       setListRefVal('finished', false)
       setListRefVal('data', [])
-      paramsObj.page = defaultPage || -1
-      paramsObj.size = defaultSize || 10
+      paramsObj.page = defaultPage ?? -1
+      paramsObj.size = defaultSize ?? 10
     }
     else {
       result.value = {}
