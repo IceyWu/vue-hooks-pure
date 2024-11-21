@@ -42,6 +42,17 @@ function domSet(el: HTMLDivElement, options?: DomSetOptions) {
   }
 }
 
+/**
+ * @description Popup
+ * @param com - Component
+ * @param options - Options
+ * @param options.renderer - Renderer
+ * @param options.alignCenter - Align center
+ * @param options.modal - Modal
+ * @param options.modalColor - Modal color
+ * @returns Promise
+ * @example
+ */
 function usePopup(com: Component, options: PopupOptions = {}) {
   const { renderer, alignCenter = true, modal = true, modalColor, ...data } = options
   return new Promise((resolve, reject) => {

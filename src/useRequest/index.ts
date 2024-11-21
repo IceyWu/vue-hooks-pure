@@ -49,6 +49,20 @@ interface Options {
   loadingDelay?: number
 }
 
+/**
+ * @description useRequest
+ * @param request - Request
+ * @param options - Options
+ * @param options.target - Target
+ * @param options.listOptions - List options
+ * @param options.getVal - Get value
+ * @param options.loadingDelay - Loading delay
+ * @returns RequestResult
+ * @example
+ * ```ts
+ * const { loading, result, getData, onRefresh, onLoad, search } = useRequest(request)
+ * ```
+ */
 function useRequest(
   request: Request,
   options: Options = { target: 'list' },
