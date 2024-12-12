@@ -11,15 +11,16 @@ interface RequestResult {
   getData: (reloadSize?: number) => Promise<void>
   onRefresh: (isReload?: boolean) => Promise<void>
   onLoad: (isReload?: boolean) => Promise<void>
+  getParamsVal: (reloadSize?: number) => any
 }
 
 interface Request {
   (other?: any): Promise<any>
 }
 
-// function getListLength(data: any) {
-//   return data?.length || 0
-// }
+function getListLength(data: any) {
+  return data?.length || 0
+}
 function getListFinished(data: any, totalNums: number) {
   return data?.length >= totalNums
 }
@@ -210,7 +211,7 @@ function useRequest(
       ) {
         return
       }
-      const totalNumTemp = getListRefVal('data').length || 0
+      const totalNumTemp = getListRefVal('data')?.length || 0
       if (isReload && totalNumTemp > 0) {
         return await getData(totalNumTemp)
       }
@@ -255,7 +256,7 @@ function useRequest(
 
     // 列表情况
     if (target === 'list') {
-      const { getFinished = getListFinished, getTotal } = getObjVal(
+      const { getFinished = getListFinished, getTotal = getListLength } = getObjVal(
         options,
         'listOptions',
         {},
@@ -297,6 +298,7 @@ function useRequest(
     onRefresh,
     onLoad,
     search,
+    getParamsVal,
   }
 }
 
