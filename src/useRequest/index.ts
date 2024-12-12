@@ -272,7 +272,8 @@ function useRequest(
         setListRefVal('data', tempList)
       }
       else {
-        const newList = getListRefVal('data').concat(tempList || [])
+        const oldList = getListRefVal('data') || []
+        const newList = oldList?.concat(tempList || [])
         setListRefVal('data', newList)
       }
       const totalList = setListRefVal('data', undefined, true)
