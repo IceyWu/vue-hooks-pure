@@ -289,7 +289,14 @@ function useRequest(
     }
     // 加载状态停止
     setListRefVal('loading', false)
-    loading.value = false
+    const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
+    if (defaultDelay === 0) {
+      loading.value = false
+      return
+    }
+    setTimeout(() => {
+      loading.value = false
+    }, defaultDelay)
   }
 
   return {
