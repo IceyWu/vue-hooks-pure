@@ -92,6 +92,11 @@ function useRequest(
       defaultTotalKey,
       defaultRefreshKey,
     } = getObjVal(options, 'listOptions', {})
+
+    if (!result.value) {
+      result.value = {}
+    }
+
     switch (target) {
       case 'data': {
         const dataKey = defaultDataKey || 'data'
@@ -284,7 +289,8 @@ function useRequest(
       result.value = listData
     }
 
-    if (err) {
+    if (err || target !== 'list') {
+      // 结束状态
       setListRefVal('finished', true)
     }
     // 加载状态停止
