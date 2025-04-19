@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import type { ParamsObj } from './utils'
-import { getObjVal, to } from '@iceywu/utils'
+import { getObjVal, isFunction, to } from '@iceywu/utils'
 import { reactive, ref } from 'vue'
 import { baseDefaultPageKey } from './utils'
 
@@ -48,11 +48,13 @@ interface Options {
   listOptions?: ListOptions
   getVal?: (data: any) => any
   loadingDelay?: number
+  // 新增请求结束回调
+  onRequestEnd?: (err: any, resData: any) => void
 }
 
 /**
  * @description useRequest
- * @param request - Request
+ * @param request - 请求函数或者返回请求函数的函数
  * @param options - Options
  * @param options.target - Target
  * @param options.listOptions - List options
@@ -61,11 +63,14 @@ interface Options {
  * @returns RequestResult
  * @example
  * ```ts
+ * // 旧方式
  * const { loading, result, getData, onRefresh, onLoad, search } = useRequest(request)
+ * // 新方式
+ * const { loading, result, getData, onRefresh, onLoad, search } = useRequest(() => newRequest)
  * ```
  */
 function useRequest(
-  request: Request,
+  request: Request | (() => Request),
   options: Options = { target: 'list' },
 ): RequestResult {
   /**
@@ -101,9 +106,12 @@ function useRequest(
       case 'data': {
         const dataKey = defaultDataKey || 'data'
 
-        if (isGet)
+        if (isGet) {
           return result.value[dataKey]
-        else result.value[dataKey] = val
+        }
+        else {
+          result.value[dataKey] = val
+        }
         break
       }
       case 'loading': {
@@ -113,14 +121,12 @@ function useRequest(
         }
         else {
           if (val === false) {
-            const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
-
-            setTimeout(() => {
-              result.value[loadingKey] = val
-            }, defaultDelay)
+            result.value[loadingKey] = val
+            loading.value = val
           }
           else {
             result.value[loadingKey] = val
+            loading.value = val
           }
         }
         break
@@ -199,8 +205,6 @@ function useRequest(
     else {
       result.value = {}
     }
-
-    loading.value = false
   }
   /**
    * 加载数据
@@ -230,6 +234,9 @@ function useRequest(
     }
   }
   async function onRefresh(isReload = false) {
+    if (getListRefVal('refreshing') || loading.value) {
+      return
+    }
     if (!isReload) {
       // 参数重置
       initData()
@@ -237,23 +244,63 @@ function useRequest(
     else {
       setListRefVal('loading', false)
       setListRefVal('finished', false)
-      loading.value = false
     }
     return await onLoad(isReload)
   }
 
+  // 提取公共的延迟处理函数
+  function handleDelay(
+    callback: () => void,
+    defaultDelay: number,
+    onRequestEnd?: (err: any, resData: any) => void,
+    err?: any,
+    resData?: any,
+  ) {
+    if (defaultDelay !== 0) {
+      setTimeout(() => {
+        callback()
+        if (onRequestEnd) {
+          onRequestEnd(err, resData)
+        }
+      }, defaultDelay)
+    }
+    else {
+      callback()
+      if (onRequestEnd) {
+        onRequestEnd(err, resData)
+      }
+    }
+  }
+
   async function getData(reloadSize?: number) {
     // 加载状态
-    setListRefVal('loading', true)
-    loading.value = true
-    const { target, listOptions } = options
-
-    const tempParams = getParamsVal(reloadSize)
-
-    if (!request) {
-      return
+    const { target, listOptions, onRequestEnd } = options
+    if (target === 'list') {
+      setListRefVal('loading', true)
     }
-    const [err, resData = []] = await to(request(tempParams))
+    else {
+      loading.value = true
+    }
+    const tempParams = getParamsVal(reloadSize)
+    // 获取实际的请求函数
+    let actualRequest: Request
+    if (isFunction(request) && request.length === 0) {
+    // 如果函数不接受参数，认为它是返回请求函数的函数
+      const result = request()
+      if (typeof result === 'function') {
+        actualRequest = result
+      }
+      else {
+        console.error('request 函数返回值不是一个可调用的函数')
+        return
+      }
+    }
+    else {
+    // 否则认为它是普通的请求函数
+      actualRequest = request as Request
+    }
+
+    const [err, resData = []] = await to(actualRequest(tempParams))
 
     const { getVal = getListVal } = options || {}
 
@@ -268,41 +315,46 @@ function useRequest(
       )
       if (getListRefVal('refreshing')) {
         setListRefVal('data', listOptions?.default || [])
-        setListRefVal('refreshing', false)
       }
       const totalNums = getTotal(resData) || 0
       setListRefVal('total', totalNums)
       const tempList = listData || []
       if (reloadSize) {
-        setListRefVal('data', tempList)
+        const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
+        handleDelay(() => {
+          setListRefVal('data', tempList)
+          setListRefVal('loading', false)
+          setListRefVal('refreshing', false)
+        }, defaultDelay, onRequestEnd, err, resData)
       }
       else {
         const oldList = getListRefVal('data') || []
         const newList = oldList?.concat(tempList || [])
-        setListRefVal('data', newList)
+        const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
+        handleDelay(() => {
+          setListRefVal('data', newList)
+          setListRefVal('loading', false)
+          setListRefVal('refreshing', false)
+        }, defaultDelay, onRequestEnd, err, resData)
       }
       const totalList = setListRefVal('data', undefined, true)
       setListRefVal('finished', getFinished(totalList, totalNums))
     }
     // 其他情况
     else {
-      result.value = listData
+      const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
+      handleDelay(() => {
+        result.value = listData
+        loading.value = false // 仅更新 loading 状态
+      }, defaultDelay, onRequestEnd, err, resData)
     }
 
     if (err || target !== 'list') {
       // 结束状态
-      setListRefVal('finished', true)
+      if (target === 'list') {
+        setListRefVal('finished', true)
+      }
     }
-    // 加载状态停止
-    setListRefVal('loading', false)
-    const defaultDelay = getObjVal(options, 'loadingDelay', 0) || 0
-    if (defaultDelay === 0) {
-      loading.value = false
-      return
-    }
-    setTimeout(() => {
-      loading.value = false
-    }, defaultDelay)
   }
 
   return {
