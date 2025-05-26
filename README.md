@@ -3,12 +3,8 @@
 这是一个包含多个 Vue 自定义 Hook 的库，提供了 `useRequest`、`useResettableRef`、`useToggle`、`usePopup` 和 `useKeepAliveLifecycle` 等实用 Hook。
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/vue-hooks-pure">
-    <img src="https://img.shields.io/npm/v/vue-hooks-pure?color=a1b858&label=" alt="NPM version">
-  </a>
-  <a href="https://www.jsdocs.io/package/vue-hooks-pure">
-    <img src="https://www.paka.dev/badges/v0/cute.svg" alt="NPM version">
-  </a>
+<a href="https://www.npmjs.com/package/vue-hooks-pure" target="__blank"><img src="https://img.shields.io/npm/v/vue-hooks-pure?color=a1b858&label=" alt="NPM version"></a>
+<a href="https://www.npmjs.com/package/vue-hooks-pure" target="__blank"><img alt="NPM Downloads" src="https://img.shields.io/npm/dm/vue-hooks-pure?color=50a36f&label="></a>
 </p>
 
 ## 安装
