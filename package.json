@@ -1,7 +1,7 @@
 {
   "name": "vue-hooks-pure",
   "type": "module",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "packageManager": "pnpm@10.11.0",
   "description": "Hooks for Vue3",
   "author": "Icey Wu <3128006406@qq.com>",
@@ -34,8 +34,8 @@
     "build:cjs": "tsc --module commonjs --target es5 --outDir dist/cjs",
     "build:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.json --declarationDir dist/types",
     "test": "jest",
-    "changelog": "npx changelogen",
-    "release": "bumpp --commit --push --tag && npm run changelog && git add CHANGELOG.md && git commit -m \"chore: update changelog\" && git push && npm publish --registry https://registry.npmjs.org",
+    "changelog": "npx changelogen@latest",
+    "release": "changelogen --release && npm publish --registry https://registry.npmjs.org && git push --follow-tags",
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
